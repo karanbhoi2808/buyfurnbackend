@@ -29,5 +29,4 @@ public class UserDetailServiceImp implements UserDetailsService {
 		
 		throw new UsernameNotFoundException(username);
 	}
-
 }
