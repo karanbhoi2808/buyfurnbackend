@@ -1,6 +1,6 @@
 # BuyFurn Backend - Spring Boot Application
 
-Welcome to the backend server for **BuyFurn**, an online platform specializing in quality, comfortable furniture that blends style and functionality. This project is built using Spring Boot, Java 17, and MySQL, with features supporting user profiles, shopping carts, product cataloging, order creation, automated OTP email generation, and payment processing with Razorpay.
+Welcome to the backend server for **BuyFurn**, an online platform specializing in quality, comfortable furniture that blends style and functionality. This project is built using Spring Boot, Java 17, and PostgreSQL, with features supporting user profiles, shopping carts, product cataloging, order creation, automated OTP email generation, and payment processing with Razorpay.
 
 ---
 
@@ -9,7 +9,7 @@ Welcome to the backend server for **BuyFurn**, an online platform specializing i
 * **Framework:** Spring Boot (v3.3.1)
 * **Java Version:** 17
 * **Build Tool:** Maven
-* **Database:** MySQL
+* **Database:** PostgreSQL
 * **ORM / JPA:** Spring Data JPA with Hibernate
 * **Security:** Spring Security (HTTP Basic Authentication)
 * **API Documentation:** Springdoc OpenAPI / Swagger UI (accessible at `/swagger-ui.html`)
@@ -43,7 +43,7 @@ buyfurnbackend/
 
 ## 🛢️ Database Configuration & Models
 
-The application connects to a MySQL database named `buyfurn`.
+The application connects to a PostgreSQL database named `buyfurn`.
 * **DDL Strategy:** `spring.jpa.hibernate.ddl-auto=update` (automatically synchronizes Java entities with the database tables).
 * **Open-in-View:** Disabled (`spring.jpa.open-in-view=false`) for optimized database sessions.
 
@@ -117,8 +117,8 @@ Integrated within [EmailService.java](file:///src/main/java/com/buyfurn/Buyfurn/
 ## ⚙️ Running the Project
 
 ### Environment Profiles
-1. **Dev Profile (`dev`):** Runs on port `8080`, database pointing to `jdbc:mysql://localhost:3306/buyfurn`. Allowed origins: `http://localhost:4200/` (Angular default).
-2. **Prod Profile (`prod`):** Runs on dynamic port (`${PORT:8080}`), database pointing to external Railway MySQL cluster. Allowed origins configured dynamically via environment variables.
+1. **Dev Profile (`dev`):** Runs on port `8080`, database pointing to `jdbc:postgresql://localhost:5432/buyfurn`. Allowed origins: `http://localhost:4200/` (Angular default).
+2. **Prod Profile (`prod`):** Runs on dynamic port (`${PORT:8080}`), database pointing to external Railway PostgreSQL cluster. Allowed origins configured dynamically via environment variables.
 
 ### Build and Run with Maven Wrapper
 ```bash
