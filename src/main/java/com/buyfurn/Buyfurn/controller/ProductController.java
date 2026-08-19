@@ -29,57 +29,57 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @RequestMapping("/api")
 public class ProductController {
 
-	@Autowired
-	ProductServices productServices;
-	
-	 @PostMapping(value = "/admin/addproduct", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-	    public Product addProduct(@RequestPart("product") String productJson, @RequestPart("imgs") MultipartFile[] images) throws IOException {
-	        ObjectMapper objectMapper = new ObjectMapper();
-	        Product product = objectMapper.readValue(productJson, Product.class);
-	        return productServices.addProduct(product, images);
-	}
-	 
-	 @GetMapping("/getallproducts")
-	 public List<Product> getAllProducts(@RequestParam(defaultValue = "0") int pageNumber,@RequestParam(defaultValue = "") String searchKey,
-			 @RequestParam(defaultValue = "") String searchCategory ){
-		 return productServices.getAllProducts(pageNumber,searchKey,searchCategory);
-	 }
-	 
-	 @GetMapping("/admin/getAllProductsForAdmin")
-	 public List<Product> getAllProductsForAdmin(@RequestParam(defaultValue = "0") int pageNumber,@RequestParam(defaultValue = "") String searchKey,
-			 @RequestParam(defaultValue = "") String searchCategory ){
-		 return productServices.getAllProducts(pageNumber,searchKey,searchCategory);
-	 }
-	 
-	 @GetMapping("/getbyid/{id}")
-	 public Product getbyId(@PathVariable Long id) {
-		 return productServices.getById(id);
-	 }
-	 
-	 @PostMapping(value = "/admin/updateproduct", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-	 public Product updateProduct(@RequestPart("product") String prod, @RequestPart(value="img",required = false) MultipartFile[] image) throws IOException {
-		 ObjectMapper objectMapper = new ObjectMapper();
-	        Product product = objectMapper.readValue(prod, Product.class);
-		 return productServices.updateProduct(product,image);
-	 }
-	 
-	 @DeleteMapping("/admin/deletebyid/{id}")
-	 public ResponseEntity<HttpStatus> deleteById(@PathVariable Long id) {
-	        String response = productServices.deleteById(id);
-	        if ("Product Deleted !!".equals(response)) {
-	            return new ResponseEntity<>(HttpStatus.OK);
-	        } else {
-	            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-	        }
-	  }
-	 
-	 @GetMapping("/user/getproductdetails/{isSingleProductCheckout}/{productId}")
-	 public List<Product> getProdctDetails(Principal principal, @PathVariable boolean isSingleProductCheckout,@PathVariable long productId) {
-		return productServices.getProductDetails(principal,isSingleProductCheckout, productId);
-	 }
-	 
-	 @GetMapping("/latest")
-	    public List<Product> getLatestProducts() {
-	        return productServices.getLatestProducts();
-	    }
+    @Autowired
+    ProductServices productServices;
+
+    @PostMapping(value = "/admin/add-product", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Product addProduct(@RequestPart("product") String productJson, @RequestPart("imgs") MultipartFile[] images) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        Product product = objectMapper.readValue(productJson, Product.class);
+        return productServices.addProduct(product, images);
+    }
+
+    @GetMapping("/get-all-products")
+    public List<Product> getAllProducts(@RequestParam(defaultValue = "0") int pageNumber, @RequestParam(defaultValue = "") String searchKey,
+                                        @RequestParam(defaultValue = "") String searchCategory) {
+        return productServices.getAllProducts(pageNumber, searchKey, searchCategory);
+    }
+
+    @GetMapping("/admin/get-all-products-for-admin")
+    public List<Product> getAllProductsForAdmin(@RequestParam(defaultValue = "0") int pageNumber, @RequestParam(defaultValue = "") String searchKey,
+                                                @RequestParam(defaultValue = "") String searchCategory) {
+        return productServices.getAllProducts(pageNumber, searchKey, searchCategory);
+    }
+
+    @GetMapping("/get-by-id/{id}")
+    public Product getById(@PathVariable Long id) {
+        return productServices.getById(id);
+    }
+
+    @PostMapping(value = "/admin/update-product", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Product updateProduct(@RequestPart("product") String prod, @RequestPart(value = "img", required = false) MultipartFile[] image) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        Product product = objectMapper.readValue(prod, Product.class);
+        return productServices.updateProduct(product, image);
+    }
+
+    @DeleteMapping("/admin/delete-by-id/{id}")
+    public ResponseEntity<HttpStatus> deleteById(@PathVariable Long id) {
+        String response = productServices.deleteById(id);
+        if ("Product Deleted !!".equals(response)) {
+            return new ResponseEntity<>(HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @GetMapping("/user/get-product-details/{isSingleProductCheckout}/{productId}")
+    public List<Product> getProductDetails(Principal principal, @PathVariable boolean isSingleProductCheckout, @PathVariable long productId) {
+        return productServices.getProductDetails(principal, isSingleProductCheckout, productId);
+    }
+
+    @GetMapping("/latest")
+    public List<Product> getLatestProducts() {
+        return productServices.getLatestProducts();
+    }
 }

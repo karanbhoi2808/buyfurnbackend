@@ -15,6 +15,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.ElementCollection;
+import jakarta.persistence.OrderBy;
 
 @Entity
 public class Product {
@@ -27,6 +28,7 @@ public class Product {
     
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinColumn(name = "product_id")
+    @OrderBy("sequence ASC")
     private List<ProductImages> productImages = new ArrayList<>();
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
