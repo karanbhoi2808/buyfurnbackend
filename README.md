@@ -34,7 +34,7 @@ buyfurnbackend/
 │   │   │   └── service/        # Business Logic Layers
 │   │   └── resources/          # Configuration files (application.properties)
 │   └── test/                   # Unit & Integration Tests
-├── DockerFile                  # Multi-stage Docker deployment config
+├── Dockerfile                  # Multi-stage Docker deployment config
 ├── mvnw / mvnw.cmd             # Maven wrapper scripts
 └── pom.xml                     # Maven project dependencies
 ```
