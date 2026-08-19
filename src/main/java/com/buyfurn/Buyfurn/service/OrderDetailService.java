@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.buyfurn.Buyfurn.model.Cart;
@@ -25,6 +26,16 @@ import com.razorpay.RazorpayClient;
 
 @Service
 public class OrderDetailService {
+
+	@Value("${razorpay.key}")
+	private String razorpayKey;
+
+	@Value("${razorpay.secret}")
+	private String razorpaySecret;
+
+	@Value("${razorpay.currency:INR}")
+	private String razorpayCurrency;
+
 	@Autowired
 	private OrderDetailsRepository orderDetailsRepository;
 
@@ -98,18 +109,14 @@ public class OrderDetailService {
 		return orderDetailsRepository.findByUser(user);
 	}
 
-	private static final String KEY = "rzp_test_TOGAyR5vOJ3zVE";
-	private static final String KEY_SECRET = "G8brcbnHhqpJqMM8GmbqXUZ6";
-	private static final String CURRENCY = "INR";
-
 	public TransactionDetails createTransaction(double amout) {
 		try {
 			
 			JSONObject jsonObject=new JSONObject();
 			jsonObject.put("amount", (amout*100));
-			jsonObject.put("currency", CURRENCY);
+			jsonObject.put("currency", razorpayCurrency);
 			
-			RazorpayClient razorpayClient = new RazorpayClient(KEY, KEY_SECRET);
+			RazorpayClient razorpayClient = new RazorpayClient(razorpayKey, razorpaySecret);
 			
 			Order order = razorpayClient.orders.create(jsonObject);
 			return prepareTransactionDetials(order);
@@ -129,7 +136,7 @@ public class OrderDetailService {
 		String currency=order.get("currency");
 		Integer amount=order.get("amount");
 		
-		TransactionDetails transaction=new TransactionDetails(orderId, currency, amount,KEY);
+		TransactionDetails transaction=new TransactionDetails(orderId, currency, amount, razorpayKey);
 		return transaction;
 	}
 }

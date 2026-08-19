@@ -36,10 +36,6 @@ public class User {
 	@Embedded
 	private Address address;
 
-	@OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-	@JoinTable(name = "participant_images", joinColumns = { @JoinColumn(name = "id") }, inverseJoinColumns = {
-			@JoinColumn(name = "image_id") })
-	UserImage userImage;
 
 	@OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
 	@JoinColumn(name = "cart_id")
@@ -104,13 +100,6 @@ public class User {
 		this.name = name;
 	}
 
-	public UserImage getUserImage() {
-		return userImage;
-	}
-
-	public void setUserImage(UserImage userImage) {
-		this.userImage = userImage;
-	}
 
 	public Cart getCart() {
 		return cart;
