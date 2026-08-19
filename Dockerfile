@@ -19,7 +19,7 @@ WORKDIR /app
 # Copy the JAR file from the build stage to the runtime stage
 COPY --from=build /app/target/Buyfurn-0.0.1-SNAPSHOT.jar Buyfurn-backend.jar
 
-# Expose port 8080
+# Expose port 8089
 EXPOSE 8089
 
 # Specify the command to run your application
