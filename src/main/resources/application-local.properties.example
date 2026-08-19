@@ -1,0 +1,46 @@
+# ===================================================================
+# Local Development Configuration Template (application-local.properties)
+#
+# Copy this file to 'application-local.properties' in the same directory
+# and update it with your own developer credentials.
+#
+# DO NOT commit 'application-local.properties' to version control.
+# ===================================================================
+
+# -------------------------------------------------------------------
+# Server Settings
+# -------------------------------------------------------------------
+server.port=8089
+
+# -------------------------------------------------------------------
+# Database Configuration (PostgreSQL)
+# -------------------------------------------------------------------
+spring.datasource.url=jdbc:postgresql://localhost:5432/buyfurnlocal
+spring.datasource.username=postgres
+spring.datasource.password=1234
+spring.jpa.hibernate.ddl-auto=update
+
+# -------------------------------------------------------------------
+# CORS Configuration
+# -------------------------------------------------------------------
+# Set specific origins if needed; wildcard (*) allows any origin but disables credential sharing.
+spring.web.cors.allowed-origins=*
+
+# -------------------------------------------------------------------
+# Supabase Configuration (File Storage)
+# -------------------------------------------------------------------
+supabase.url=https://example.supabase.co
+supabase.key=your-supabase-key
+supabase.bucket=bucket-name
+
+# -------------------------------------------------------------------
+# JavaMailSender Configuration (Gmail SMTP)
+# -------------------------------------------------------------------
+spring.mail.username=buyfurn.com@gmail.com
+spring.mail.password=1234
+
+# -------------------------------------------------------------------
+# Razorpay Configuration (Payments)
+# -------------------------------------------------------------------
+razorpay.key=rozarpay-key
+razorpay.secret=rozarpay-secret

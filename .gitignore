@@ -31,3 +31,7 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Application Profile Settings ###
+src/main/resources/application-local.properties
+
