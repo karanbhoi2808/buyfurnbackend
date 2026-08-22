@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.buyfurn.Buyfurn.model.Product;
+import com.buyfurn.Buyfurn.model.ProductPageResponse;
 import com.buyfurn.Buyfurn.service.ProductServices;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -40,15 +41,31 @@ public class ProductController {
     }
 
     @GetMapping("/get-all-products")
-    public List<Product> getAllProducts(@RequestParam(defaultValue = "0") int pageNumber, @RequestParam(defaultValue = "") String searchKey,
-                                        @RequestParam(defaultValue = "") String searchCategory) {
-        return productServices.getAllProducts(pageNumber, searchKey, searchCategory);
+    public ProductPageResponse getAllProducts(
+            @RequestParam(defaultValue = "0") int pageNumber,
+            @RequestParam(defaultValue = "12") int pageSize,
+            @RequestParam(defaultValue = "") String searchKey,
+            @RequestParam(required = false) List<String> searchCategory,
+            @RequestParam(required = false) Double minPrice,
+            @RequestParam(required = false) Double maxPrice,
+            @RequestParam(required = false) String stockStatus,
+            @RequestParam(defaultValue = "createdDate") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+        return productServices.getAllProducts(pageNumber, pageSize, searchKey, searchCategory, minPrice, maxPrice, stockStatus, sortBy, sortDir);
     }
 
     @GetMapping("/admin/get-all-products-for-admin")
-    public List<Product> getAllProductsForAdmin(@RequestParam(defaultValue = "0") int pageNumber, @RequestParam(defaultValue = "") String searchKey,
-                                                @RequestParam(defaultValue = "") String searchCategory) {
-        return productServices.getAllProducts(pageNumber, searchKey, searchCategory);
+    public ProductPageResponse getAllProductsForAdmin(
+            @RequestParam(defaultValue = "0") int pageNumber,
+            @RequestParam(defaultValue = "12") int pageSize,
+            @RequestParam(defaultValue = "") String searchKey,
+            @RequestParam(required = false) List<String> searchCategory,
+            @RequestParam(required = false) Double minPrice,
+            @RequestParam(required = false) Double maxPrice,
+            @RequestParam(required = false) String stockStatus,
+            @RequestParam(defaultValue = "createdDate") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+        return productServices.getAllProducts(pageNumber, pageSize, searchKey, searchCategory, minPrice, maxPrice, stockStatus, sortBy, sortDir);
     }
 
     @GetMapping("/get-by-id/{id}")

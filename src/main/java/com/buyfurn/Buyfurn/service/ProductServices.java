@@ -12,16 +12,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.buyfurn.Buyfurn.model.Cart;
 import com.buyfurn.Buyfurn.model.Product;
 import com.buyfurn.Buyfurn.model.ProductImages;
+import com.buyfurn.Buyfurn.model.ProductPageResponse;
 import com.buyfurn.Buyfurn.model.User;
 import com.buyfurn.Buyfurn.repository.CartRepostitory;
 import com.buyfurn.Buyfurn.repository.ProductRepository;
 import com.buyfurn.Buyfurn.repository.UserRepository;
+import com.buyfurn.Buyfurn.specification.ProductSpecifications;
 
 @Service
 public class ProductServices {
@@ -59,19 +63,50 @@ public class ProductServices {
         return productImages;
     }
 
-    public List<Product> getAllProducts(int pageNumber, String searchKey, String searchCategory) {
-        Pageable pageable = PageRequest.of(pageNumber, 12);
+    public ProductPageResponse getAllProducts(
+            int pageNumber,
+            int pageSize,
+            String searchKey,
+            List<String> categories,
+            Double minPrice,
+            Double maxPrice,
+            String stockStatus,
+            String sortBy,
+            String sortDir) {
 
-        if (searchKey.equals("") && searchCategory.equals("")) {
-            Page<Product> paginatedProducts = productRepository.findAll(pageable);
-            return paginatedProducts.getContent();
-        } else if (!searchCategory.equals("") && searchKey.equals("")) {
-            return productRepository.findByCategory(searchCategory);
-        } else if (!searchCategory.equals("") && !searchKey.equals("")) {
-            return productRepository.findByTitleContainingIgnoreCaseAndCategory(searchKey, searchCategory).getContent();
-        } else {
-            return productRepository.findByTitleContainingIgnoreCase(searchKey);
+        Sort.Direction direction = Sort.Direction.ASC;
+        if (sortDir != null && sortDir.trim().equalsIgnoreCase("desc")) {
+            direction = Sort.Direction.DESC;
         }
+
+        Sort sort = Sort.unsorted();
+        if (sortBy != null && !sortBy.trim().isEmpty()) {
+            String cleanSortBy = sortBy.trim().toLowerCase();
+            if (cleanSortBy.equals("price")) {
+                sort = Sort.by(direction, "price");
+            } else if (cleanSortBy.equals("title") || cleanSortBy.equals("name")) {
+                sort = Sort.by(direction, "title");
+            } else if (cleanSortBy.equals("createddate") || cleanSortBy.equals("latest")) {
+                sort = Sort.by(direction, "createdDate");
+            } else {
+                sort = Sort.by(direction, sortBy);
+            }
+        } else {
+            sort = Sort.by(Sort.Direction.DESC, "createdDate");
+        }
+
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, sort);
+        Specification<Product> spec = ProductSpecifications.filterProducts(searchKey, categories, minPrice, maxPrice, stockStatus);
+
+        Page<Product> paginatedProducts = productRepository.findAll(spec, pageable);
+
+        return new ProductPageResponse(
+                paginatedProducts.getContent(),
+                paginatedProducts.getNumber(),
+                paginatedProducts.getTotalPages(),
+                paginatedProducts.getTotalElements(),
+                paginatedProducts.getSize()
+        );
     }
 
 
@@ -146,12 +181,11 @@ public class ProductServices {
 
             return products;
         }
-
     }
 
 
     public List<Product> getLatestProducts() {
-        Pageable pageable = PageRequest.of(0, 8); // Page index starts at 0, size = 8
-        return productRepository.findTop8ByOrderByCreatedDateDesc(pageable);
+        Pageable pageable = PageRequest.of(0, 4); // Page index starts at 0, size = 8
+        return productRepository.findTopByOrderByCreatedDateDesc(pageable);
     }
 }
