@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.buyfurn.Buyfurn.model.User;
+import com.buyfurn.Buyfurn.model.UserListResponse;
 import com.buyfurn.Buyfurn.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -53,8 +54,14 @@ public class UserController {
     }
 
     @GetMapping("/getall")
-    public List<User> getAll() {
-        return userService.getAll();
+    public UserListResponse getAll(
+            @RequestParam(value = "searchKey", required = false) String searchKey,
+            @RequestParam(value = "role", defaultValue = "all") String role,
+            @RequestParam(value = "sortBy", defaultValue = "name") String sortBy,
+            @RequestParam(value = "sortDir", defaultValue = "asc") String sortDir,
+            @RequestParam(value = "pageNumber", defaultValue = "0") int pageNumber,
+            @RequestParam(value = "pageSize", defaultValue = "10") int pageSize) {
+        return userService.getAllUsers(searchKey, role, sortBy, sortDir, pageNumber, pageSize);
     }
 
     @PostMapping("/generate-otp")

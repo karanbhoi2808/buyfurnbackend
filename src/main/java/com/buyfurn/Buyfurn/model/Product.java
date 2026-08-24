@@ -25,33 +25,33 @@ public class Product {
     private Long id;
     private String title;
     private String description;
-    
+
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinColumn(name = "product_id")
     @OrderBy("sequence ASC")
     private List<ProductImages> productImages = new ArrayList<>();
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<Cart> carts = new ArrayList<>();
-    
-    
+    private List<Cart> carts = new ArrayList<>();
+
+
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderDetails> orderDetails = new ArrayList<>();
-    
+
     private double price;
     private String warranty;
     private String category;
     private String color;
-    
- 
+
+
     private String material;
-    
+
     private int seatingCapacity;
     private double weight;
     private String careAndMaintenance;
     private String stockStatus;
 
-    
+
     @Column(name = "created_date", updatable = false)
     private LocalDateTime createdDate;
 
@@ -59,16 +59,16 @@ public class Product {
     protected void onCreate() {
         this.createdDate = LocalDateTime.now();
     }
-    
+
     public String getStockStatus() {
-		return stockStatus;
-	}
+        return stockStatus;
+    }
 
-	public void setStockStatus(String stockStatus) {
-		this.stockStatus = stockStatus;
-	}
+    public void setStockStatus(String stockStatus) {
+        this.stockStatus = stockStatus;
+    }
 
-	public Product() {
+    public Product() {
         super();
     }
 
@@ -168,5 +168,9 @@ public class Product {
 
     public void setCareAndMaintenance(String careAndMaintenance) {
         this.careAndMaintenance = careAndMaintenance;
+    }
+
+    public LocalDateTime getCreatedDate() {
+        return createdDate;
     }
 }
