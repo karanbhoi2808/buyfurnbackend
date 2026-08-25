@@ -5,8 +5,8 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.buyfurn.Buyfurn.model.AdminDashboardResponse;
-import com.buyfurn.Buyfurn.repository.OrderAnalyticsProjection;
+import com.buyfurn.Buyfurn.dto.AdminDashboardResponse;
+import com.buyfurn.Buyfurn.projection.OrderAnalyticsProjection;
 import com.buyfurn.Buyfurn.repository.OrderDetailsRepository;
 import com.buyfurn.Buyfurn.repository.ProductRepository;
 import com.buyfurn.Buyfurn.repository.UserRepository;

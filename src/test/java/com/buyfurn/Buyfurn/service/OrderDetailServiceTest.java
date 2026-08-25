@@ -15,8 +15,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.buyfurn.Buyfurn.model.OrderAnalyticsResponse;
-import com.buyfurn.Buyfurn.repository.OrderAnalyticsProjection;
+import com.buyfurn.Buyfurn.dto.OrderAnalyticsResponse;
+import com.buyfurn.Buyfurn.projection.OrderAnalyticsProjection;
 import com.buyfurn.Buyfurn.repository.OrderDetailsRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -34,19 +34,19 @@ public class OrderDetailServiceTest {
         OrderAnalyticsProjection o1 = mock(OrderAnalyticsProjection.class);
         when(o1.getAmount()).thenReturn(100.0);
         when(o1.getOrderStatus()).thenReturn("Delivered");
-        when(o1.getCreatedDate()).thenReturn(LocalDateTime.of(2024, 8, 15, 12, 0));
+        when(o1.getCreatedAt()).thenReturn(LocalDateTime.of(2024, 8, 15, 12, 0));
         when(o1.getCategory()).thenReturn("Living Room");
 
         OrderAnalyticsProjection o2 = mock(OrderAnalyticsProjection.class);
         when(o2.getAmount()).thenReturn(50.0);
         when(o2.getOrderStatus()).thenReturn("Placed");
-        when(o2.getCreatedDate()).thenReturn(LocalDateTime.of(2024, 8, 20, 12, 0));
+        when(o2.getCreatedAt()).thenReturn(LocalDateTime.of(2024, 8, 20, 12, 0));
         when(o2.getCategory()).thenReturn("Bedroom");
 
         OrderAnalyticsProjection o3 = mock(OrderAnalyticsProjection.class);
         when(o3.getAmount()).thenReturn(200.0);
         when(o3.getOrderStatus()).thenReturn("Placed");
-        when(o3.getCreatedDate()).thenReturn(LocalDateTime.of(2024, 9, 10, 12, 0));
+        when(o3.getCreatedAt()).thenReturn(LocalDateTime.of(2024, 9, 10, 12, 0));
         when(o3.getCategory()).thenReturn("Living Room");
 
         List<OrderAnalyticsProjection> mockOrders = Arrays.asList(o1, o2, o3);

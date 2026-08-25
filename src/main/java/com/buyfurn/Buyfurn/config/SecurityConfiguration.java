@@ -1,4 +1,4 @@
-package com.buyfurn.Buyfurn.configuration;
+package com.buyfurn.Buyfurn.config;
 
 import java.util.Arrays;
 import java.util.List;
@@ -18,17 +18,18 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
+import com.buyfurn.Buyfurn.service.UserDetailsServiceImpl;
+
 @Configuration
 public class SecurityConfiguration {
 
-    @Value("${spring.web.cors.allowed-origins:*}")
+    @Value("${spring.web.cors.allowed-origins}")
     private String allowedOrigins;
 
+    private final UserDetailsServiceImpl userDetailsService;
 
-    private final UserDetailServiceImp userDetailServiceImp;
-
-    public SecurityConfiguration(UserDetailServiceImp userDetailServiceImp) {
-        this.userDetailServiceImp = userDetailServiceImp;
+    public SecurityConfiguration(UserDetailsServiceImpl userDetailsService) {
+        this.userDetailsService = userDetailsService;
     }
 
     @Bean
@@ -38,7 +39,7 @@ public class SecurityConfiguration {
 
     @Bean
     DaoAuthenticationProvider daoAuthenticationProvider() {
-        DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider(userDetailServiceImp);
+        DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider(userDetailsService);
         authenticationProvider.setPasswordEncoder(passwordEncoder());
         return authenticationProvider;
     }
@@ -79,10 +80,7 @@ public class SecurityConfiguration {
             authorize.requestMatchers("/api/**").permitAll();
             authorize.anyRequest().permitAll();
         });
-//		http.formLogin(Customizer.withDefaults());
         http.httpBasic(Customizer.withDefaults());
         return http.build();
     }
-
-
 }

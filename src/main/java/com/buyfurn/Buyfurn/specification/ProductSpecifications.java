@@ -2,8 +2,9 @@ package com.buyfurn.Buyfurn.specification;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import org.springframework.data.jpa.domain.Specification;
-import com.buyfurn.Buyfurn.model.Product;
+import com.buyfurn.Buyfurn.entity.Product;
 import jakarta.persistence.criteria.Predicate;
 
 public class ProductSpecifications {
@@ -47,21 +48,40 @@ public class ProductSpecifications {
 
             // Stock status filter
             if (stockStatus != null && !stockStatus.trim().isEmpty()) {
+
                 String status = stockStatus.trim().toLowerCase();
-                if (status.equals("in_stock") || status.equals("instock") || status.equals("in stock")) {
-                    predicates.add(builder.or(
-                        builder.equal(builder.lower(root.get("stockStatus")), "in stock"),
-                        builder.equal(builder.lower(root.get("stockStatus")), "in_stock"),
-                        builder.equal(builder.lower(root.get("stockStatus")), "instock")
-                    ));
-                } else if (status.equals("out_of_stock") || status.equals("outofstock") || status.equals("out of stock")) {
-                    predicates.add(builder.or(
-                        builder.equal(builder.lower(root.get("stockStatus")), "out of stock"),
-                        builder.equal(builder.lower(root.get("stockStatus")), "out_of_stock"),
-                        builder.equal(builder.lower(root.get("stockStatus")), "outofstock")
-                    ));
+
+                if (status.equals("in_stock")) {
+                    predicates.add(
+                            builder.equal(
+                                    builder.lower(root.get("stockStatus")),
+                                    "in stock"
+                            )
+                    );
+
+                } else if (status.equals("in_stock_soon")) {
+                    predicates.add(
+                            builder.equal(
+                                    builder.lower(root.get("stockStatus")),
+                                    "in stock soon"
+                            )
+                    );
+
+                } else if (status.equals("out_of_stock")) {
+                    predicates.add(
+                            builder.equal(
+                                    builder.lower(root.get("stockStatus")),
+                                    "out of stock"
+                            )
+                    );
+
                 } else {
-                    predicates.add(builder.equal(builder.lower(root.get("stockStatus")), status));
+                    predicates.add(
+                            builder.equal(
+                                    builder.lower(root.get("stockStatus")),
+                                    status
+                            )
+                    );
                 }
             }
 
