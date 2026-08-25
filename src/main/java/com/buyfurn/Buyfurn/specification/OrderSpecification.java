@@ -5,9 +5,9 @@ import java.util.List;
 
 import org.springframework.data.jpa.domain.Specification;
 
-import com.buyfurn.Buyfurn.model.OrderDetails;
-import com.buyfurn.Buyfurn.model.Product;
-import com.buyfurn.Buyfurn.model.User;
+import com.buyfurn.Buyfurn.entity.OrderDetails;
+import com.buyfurn.Buyfurn.entity.Product;
+import com.buyfurn.Buyfurn.entity.User;
 
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;

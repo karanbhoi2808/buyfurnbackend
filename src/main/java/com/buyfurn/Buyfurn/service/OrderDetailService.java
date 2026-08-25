@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,26 +23,27 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import com.buyfurn.Buyfurn.model.Cart;
-import com.buyfurn.Buyfurn.model.OrderDetails;
-import com.buyfurn.Buyfurn.model.OrderAnalyticsResponse;
-import com.buyfurn.Buyfurn.model.OrderListResponse;
-import com.buyfurn.Buyfurn.model.OrderInput;
-import com.buyfurn.Buyfurn.model.Orderquantity;
-import com.buyfurn.Buyfurn.model.Product;
-import com.buyfurn.Buyfurn.model.ProductImages;
-import com.buyfurn.Buyfurn.specification.OrderSpecification;
-import com.buyfurn.Buyfurn.model.TransactionDetails;
-import com.buyfurn.Buyfurn.model.User;
-import com.buyfurn.Buyfurn.repository.CartRepostitory;
+import com.buyfurn.Buyfurn.dto.DtoMapper;
+import com.buyfurn.Buyfurn.dto.OrderAnalyticsResponse;
+import com.buyfurn.Buyfurn.dto.OrderDetailsDto;
+import com.buyfurn.Buyfurn.dto.OrderInputDto;
+import com.buyfurn.Buyfurn.dto.OrderListResponse;
+import com.buyfurn.Buyfurn.dto.OrderQuantityDto;
+import com.buyfurn.Buyfurn.dto.TransactionDetails;
+import com.buyfurn.Buyfurn.entity.Cart;
+import com.buyfurn.Buyfurn.entity.OrderDetails;
+import com.buyfurn.Buyfurn.entity.Product;
+import com.buyfurn.Buyfurn.entity.User;
+import com.buyfurn.Buyfurn.exception.ResourceNotFoundException;
+import com.buyfurn.Buyfurn.projection.OrderAnalyticsProjection;
+import com.buyfurn.Buyfurn.projection.OrderDetailsProjection;
+import com.buyfurn.Buyfurn.repository.CartRepository;
 import com.buyfurn.Buyfurn.repository.OrderDetailsRepository;
-import com.buyfurn.Buyfurn.repository.OrderDetailsProjection;
-import com.buyfurn.Buyfurn.repository.OrderAnalyticsProjection;
 import com.buyfurn.Buyfurn.repository.ProductRepository;
 import com.buyfurn.Buyfurn.repository.UserRepository;
+import com.buyfurn.Buyfurn.specification.OrderSpecification;
 import com.razorpay.Order;
 import com.razorpay.RazorpayClient;
-
 
 @Service
 public class OrderDetailService {
@@ -60,179 +62,184 @@ public class OrderDetailService {
 
     @Autowired
     private ProductRepository productRepository;
+    
     @Autowired
-    private CartRepostitory cartRepostitory;
+    private CartRepository cartRepository;
 
     @Autowired
     private UserRepository userRepository;
+    
     private final static String ORDER_PLACED = "Placed";
     private final static String ORDER_DELIVERED = "Delivered";
 
-    public List<OrderDetails> placeOrder(OrderInput orderInput, Principal principal, boolean isSingleProductCheckout) {
-
-        List<Orderquantity> orderQuantities = orderInput.getOrderquantities();
+    public List<OrderDetailsDto> placeOrder(OrderInputDto orderInput, Principal principal, boolean isSingleProductCheckout) {
+        List<OrderQuantityDto> orderQuantities = orderInput.getOrderQuantities();
 
         if (orderQuantities == null || orderQuantities.isEmpty()) {
-            return null;
+            return List.of();
         }
 
         String username = principal.getName();
         User user = userRepository.findByEmail(username);
-        List<OrderDetails> placedOrders = new ArrayList<OrderDetails>();
-        for (Orderquantity o : orderQuantities) {
-
-            Product product = productRepository.findById(o.getProductId()).get();
+        if (user == null) {
+            throw new ResourceNotFoundException("User not found");
+        }
+        
+        List<OrderDetails> placedOrders = new ArrayList<>();
+        for (OrderQuantityDto o : orderQuantities) {
+            Product product = productRepository.findById(o.getProductId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Product not found with ID: " + o.getProductId()));
+            
             OrderDetails orderDetail = new OrderDetails(
                     user.getEmail(),
-                    orderInput.getAddress(),
+                    DtoMapper.toEntity(orderInput.getAddress()),
                     orderInput.getContactNumber(),
                     ORDER_PLACED,
                     product.getPrice() * o.getQuantity(),
-                    product, user,
+                    product, 
+                    user,
                     orderInput.getTransactionId());
 
             orderDetailsRepository.save(orderDetail);
             placedOrders.add(orderDetail);
 
-
-            // empty cart
-
             if (!isSingleProductCheckout) {
-                List<Cart> carts = cartRepostitory.findByUser(user);
+                List<Cart> carts = cartRepository.findByUser(user);
+                carts.forEach(x -> cartRepository.delete(x));
+            }
+        }
+        
+        return placedOrders.stream()
+                .map(DtoMapper::toDto)
+                .collect(Collectors.toList());
+    }
 
-                carts.stream().forEach(x -> cartRepostitory.delete(x));
+    public OrderListResponse getAllOrders(
+            String status,
+            String searchKey,
+            String sortBy,
+            String sortDir,
+            int pageNumber,
+            int pageSize) {
 
+        Sort.Direction direction = Sort.Direction.ASC;
+        if (sortDir != null && sortDir.trim().equalsIgnoreCase("desc")) {
+            direction = Sort.Direction.DESC;
+        }
+
+        Sort sort = Sort.unsorted();
+        if (sortBy != null && !sortBy.trim().isEmpty()) {
+            String cleanSortBy = sortBy.trim().toLowerCase();
+            if (cleanSortBy.equals("date") || cleanSortBy.equals("createddate")) {
+                sort = Sort.by(direction, "createdAt");
+            } else if (cleanSortBy.equals("amount") || cleanSortBy.equals("price")) {
+                sort = Sort.by(direction, "amount");
+            } else if (cleanSortBy.equals("status") || cleanSortBy.equals("orderstatus")) {
+                sort = Sort.by(direction, "orderStatus");
+            } else {
+                sort = Sort.by(direction, sortBy);
+            }
+        } else {
+            sort = Sort.by(Sort.Direction.DESC, "createdAt");
+        }
+
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, sort);
+
+        Specification<OrderDetails> spec = OrderSpecification.filterOrders(status, searchKey);
+
+        List<OrderAnalyticsProjection> globalOrders = orderDetailsRepository.findAllAnalytics();
+
+        long totalOrders = globalOrders.size();
+        long placedCount = 0;
+        long deliveredCount = 0;
+        double totalRevenue = 0;
+
+        for (OrderAnalyticsProjection o : globalOrders) {
+            Double amt = o.getAmount();
+            if (amt != null) {
+                totalRevenue += amt;
+            }
+            if (o.getOrderStatus() != null) {
+                if (o.getOrderStatus().equalsIgnoreCase("Placed")) {
+                    placedCount++;
+                } else if (o.getOrderStatus().equalsIgnoreCase("Delivered")) {
+                    deliveredCount++;
+                }
+            }
+        }
+
+        Page<OrderDetailsProjection> paginatedResult = orderDetailsRepository.findBy(spec, q -> q.as(OrderDetailsProjection.class).page(pageable));
+
+        List<OrderListResponse.OrderResponseDTO> ordersDTOList = new java.util.ArrayList<>();
+
+        for (OrderDetailsProjection o : paginatedResult.getContent()) {
+            OrderListResponse.UserResponseDTO userDTO = null;
+            if (o.getUser() != null) {
+                String name = o.getUser().getName();
+                String emailVal = o.getUser().getEmail();
+                String usernameVal = "";
+                if (emailVal != null) {
+                    usernameVal = emailVal.split("@")[0];
+                }
+                userDTO = new OrderListResponse.UserResponseDTO(name, usernameVal, emailVal);
+            } else {
+                String emailVal = o.getUsername();
+                String usernameVal = "";
+                if (emailVal != null) {
+                    usernameVal = emailVal.split("@")[0];
+                }
+                userDTO = new OrderListResponse.UserResponseDTO("", usernameVal, emailVal);
             }
 
+            OrderListResponse.AddressResponseDTO addrDTO = null;
+            if (o.getAddress() != null) {
+                addrDTO = new OrderListResponse.AddressResponseDTO(
+                        o.getAddress().getAddress(),
+                        o.getAddress().getCity(),
+                        o.getAddress().getState(),
+                        o.getAddress().getPincode()
+                );
+            }
+
+            OrderListResponse.ProductResponseDTO prodDTO = null;
+            if (o.getProduct() != null) {
+                List<OrderListResponse.ProductImageResponseDTO> imgDTOList = new java.util.ArrayList<>();
+                if (o.getProduct().getProductImages() != null && !o.getProduct().getProductImages().isEmpty()) {
+                    OrderDetailsProjection.ProductImageProj firstImg = o.getProduct().getProductImages().get(0);
+                    imgDTOList.add(new OrderListResponse.ProductImageResponseDTO(firstImg.getName(), firstImg.getUrl()));
+                }
+                prodDTO = new OrderListResponse.ProductResponseDTO(
+                        o.getProduct().getId(),
+                        o.getProduct().getTitle(),
+                        o.getProduct().getPrice(),
+                        o.getProduct().getCategory(),
+                        imgDTOList
+                );
+            }
+
+            ordersDTOList.add(new OrderListResponse.OrderResponseDTO(
+                    o.getOrderId(),
+                    o.getOrderStatus(),
+                    o.getCreatedAt(),
+                    o.getContact(),
+                    userDTO,
+                    addrDTO,
+                    prodDTO
+            ));
         }
-        return placedOrders;
+
+        double roundedTotalRevenue = Math.round(totalRevenue * 100.0) / 100.0;
+
+        return new OrderListResponse(
+                totalOrders,
+                placedCount,
+                deliveredCount,
+                roundedTotalRevenue,
+                paginatedResult.getTotalPages(),
+                paginatedResult.getNumber(),
+                ordersDTOList
+        );
     }
-
-    public List<OrderDetails> allOrder(String status) {
-        if (status.equals("all")) {
-            return orderDetailsRepository.findAll();
-        } else {
-            return orderDetailsRepository.findByOrderStatus(status);
-        }
-    }
-
-	public OrderListResponse getAllOrders(
-			String status,
-			String searchKey,
-			String sortDir,
-			String sortOrder,
-			int pageNumber,
-			int pageSize) {
-
-		Sort sort;
-		String sortField = "createdDate";
-		if ("price".equalsIgnoreCase(sortDir)) {
-			sortField = "amount";
-		}
-
-		if ("asc".equalsIgnoreCase(sortOrder)) {
-			sort = Sort.by(sortField).ascending();
-		} else {
-			sort = Sort.by(sortField).descending();
-		}
-
-		Pageable pageable = PageRequest.of(pageNumber, pageSize, sort);
-
-		Specification<OrderDetails> spec = OrderSpecification.filterOrders(status, searchKey);
-
-		List<OrderAnalyticsProjection> globalOrders = orderDetailsRepository.findAllAnalytics();
-
-		long totalOrders = globalOrders.size();
-		long placedCount = 0;
-		long deliveredCount = 0;
-		double totalRevenue = 0;
-
-		for (OrderAnalyticsProjection o : globalOrders) {
-			Double amt = o.getAmount();
-			if (amt != null) {
-				totalRevenue += amt;
-			}
-			if (o.getOrderStatus() != null) {
-				if (o.getOrderStatus().equalsIgnoreCase("Placed")) {
-					placedCount++;
-				} else if (o.getOrderStatus().equalsIgnoreCase("Delivered")) {
-					deliveredCount++;
-				}
-			}
-		}
-
-		Page<OrderDetailsProjection> paginatedResult = orderDetailsRepository.findBy(spec, q -> q.as(OrderDetailsProjection.class).page(pageable));
-
-		List<OrderListResponse.OrderResponseDTO> ordersDTOList = new java.util.ArrayList<>();
-
-		for (OrderDetailsProjection o : paginatedResult.getContent()) {
-			OrderListResponse.UserResponseDTO userDTO = null;
-			if (o.getUser() != null) {
-				String name = o.getUser().getName();
-				String emailVal = o.getUser().getEmail();
-				String usernameVal = "";
-				if (emailVal != null) {
-					usernameVal = emailVal.split("@")[0];
-				}
-				userDTO = new OrderListResponse.UserResponseDTO(name, usernameVal, emailVal);
-			} else {
-				String emailVal = o.getUsername();
-				String usernameVal = "";
-				if (emailVal != null) {
-					usernameVal = emailVal.split("@")[0];
-				}
-				userDTO = new OrderListResponse.UserResponseDTO("", usernameVal, emailVal);
-			}
-
-			OrderListResponse.AddressResponseDTO addrDTO = null;
-			if (o.getAddress() != null) {
-				addrDTO = new OrderListResponse.AddressResponseDTO(
-						o.getAddress().getAddress(),
-						o.getAddress().getCity(),
-						o.getAddress().getState(),
-						o.getAddress().getPincode()
-				);
-			}
-
-			OrderListResponse.ProductResponseDTO prodDTO = null;
-			if (o.getProduct() != null) {
-				List<OrderListResponse.ProductImageResponseDTO> imgDTOList = new java.util.ArrayList<>();
-				if (o.getProduct().getProductImages() != null && !o.getProduct().getProductImages().isEmpty()) {
-					OrderDetailsProjection.ProductImageProj firstImg = o.getProduct().getProductImages().get(0);
-					imgDTOList.add(new OrderListResponse.ProductImageResponseDTO(firstImg.getName(), firstImg.getUrl()));
-				}
-				prodDTO = new OrderListResponse.ProductResponseDTO(
-						o.getProduct().getId(),
-						o.getProduct().getTitle(),
-						o.getProduct().getPrice(),
-						o.getProduct().getCategory(),
-						imgDTOList
-				);
-			}
-
-			ordersDTOList.add(new OrderListResponse.OrderResponseDTO(
-					o.getOrderId(),
-					o.getOrderStatus(),
-					o.getCreatedDate(),
-					o.getContact(),
-					userDTO,
-					addrDTO,
-					prodDTO
-			));
-		}
-
-		double roundedTotalRevenue = Math.round(totalRevenue * 100.0) / 100.0;
-
-		return new OrderListResponse(
-				totalOrders,
-				placedCount,
-				deliveredCount,
-				roundedTotalRevenue,
-				paginatedResult.getTotalPages(),
-				paginatedResult.getNumber(),
-				ordersDTOList
-		);
-	}
 
     public OrderAnalyticsResponse getOrderAnalytics(String status) {
         List<OrderAnalyticsProjection> orders;
@@ -269,7 +276,7 @@ public class OrderDetailService {
 
         Map<YearMonth, List<OrderAnalyticsProjection>> ordersByMonth = new TreeMap<>();
         for (OrderAnalyticsProjection order : orders) {
-            LocalDateTime createdDate = order.getCreatedDate();
+            LocalDateTime createdDate = order.getCreatedAt();
             if (createdDate == null) {
                 createdDate = LocalDateTime.now();
             }
@@ -370,46 +377,45 @@ public class OrderDetailService {
         return new OrderAnalyticsResponse(summary, monthlyBreakdownList, categoryBreakdownList, statusBreakdownMap);
     }
 
-    public OrderDetails markAsDelivered(long orderId) {
-        OrderDetails orderDetails = orderDetailsRepository.findById(orderId).get();
+    public OrderDetailsDto markAsDelivered(long orderId) {
+        OrderDetails orderDetails = orderDetailsRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with ID: " + orderId));
         orderDetails.setOrderStatus(ORDER_DELIVERED);
-        return orderDetailsRepository.save(orderDetails);
+        orderDetailsRepository.save(orderDetails);
+        return DtoMapper.toDto(orderDetails);
     }
 
-    public List<OrderDetails> myOrders(Principal principal) {
+    public List<OrderDetailsDto> myOrders(Principal principal) {
         String username = principal.getName();
         User user = userRepository.findByEmail(username);
-        return orderDetailsRepository.findByUser(user);
+        if (user == null) {
+            throw new ResourceNotFoundException("User not found");
+        }
+        return orderDetailsRepository.findByUser(user).stream()
+                .map(DtoMapper::toDto)
+                .collect(Collectors.toList());
     }
 
-    public TransactionDetails createTransaction(double amout) {
+    public TransactionDetails createTransaction(double amount) {
         try {
-
             JSONObject jsonObject = new JSONObject();
-            jsonObject.put("amount", (amout * 100));
+            jsonObject.put("amount", (amount * 100));
             jsonObject.put("currency", razorpayCurrency);
 
             RazorpayClient razorpayClient = new RazorpayClient(razorpayKey, razorpaySecret);
-
             Order order = razorpayClient.orders.create(jsonObject);
-            return prepareTransactionDetials(order);
-
+            return prepareTransactionDetails(order);
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+            System.err.println("Razorpay Transaction generation failed: " + e.getMessage());
         }
         return null;
-
     }
 
-
-    //imp details that we want on UI
-
-    private TransactionDetails prepareTransactionDetials(Order order) {
+    private TransactionDetails prepareTransactionDetails(Order order) {
         String orderId = order.get("id");
         String currency = order.get("currency");
         Integer amount = order.get("amount");
 
-        TransactionDetails transaction = new TransactionDetails(orderId, currency, amount, razorpayKey);
-        return transaction;
+        return new TransactionDetails(orderId, currency, amount, razorpayKey);
     }
 }

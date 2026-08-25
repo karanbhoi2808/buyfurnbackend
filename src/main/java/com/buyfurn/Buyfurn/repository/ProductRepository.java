@@ -10,17 +10,16 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import com.buyfurn.Buyfurn.model.Product;
+import com.buyfurn.Buyfurn.entity.Product;
 
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpecificationExecutor<Product> {
 
-    @Query("SELECT p FROM Product p ORDER BY p.createdDate DESC")
-    List<Product> findTop8ByOrderByCreatedDateDesc(Pageable pageable);
+    @Query("SELECT p FROM Product p ORDER BY p.createdAt DESC")
+    List<Product> findTop8ByOrderByCreatedAtDesc(Pageable pageable);
 
-    @Query("SELECT p FROM Product p ORDER BY p.createdDate DESC")
-    List<Product> findTopByOrderByCreatedDateDesc(Pageable pageable);
-
+    @Query("SELECT p FROM Product p ORDER BY p.createdAt DESC")
+    List<Product> findTopByOrderByCreatedAtDesc(Pageable pageable);
 
     Page<Product> findAll(Pageable pageable);
 

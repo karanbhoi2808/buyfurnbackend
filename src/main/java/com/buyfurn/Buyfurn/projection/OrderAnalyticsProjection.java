@@ -1,10 +1,10 @@
-package com.buyfurn.Buyfurn.repository;
+package com.buyfurn.Buyfurn.projection;
 
 import java.time.LocalDateTime;
 
 public interface OrderAnalyticsProjection {
     Double getAmount();
     String getOrderStatus();
-    LocalDateTime getCreatedDate();
+    LocalDateTime getCreatedAt();
     String getCategory();
 }

@@ -5,8 +5,12 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import com.buyfurn.Buyfurn.model.AdminDashboardResponse;
+
+import com.buyfurn.Buyfurn.dto.AdminDashboardResponse;
+import com.buyfurn.Buyfurn.dto.ApiResponse;
 import com.buyfurn.Buyfurn.service.AdminDashboardService;
+
+import java.time.LocalDateTime;
 
 @RestController
 @CrossOrigin("*")
@@ -17,7 +21,13 @@ public class AdminDashboardController {
     private AdminDashboardService adminDashboardService;
 
     @GetMapping("/counts")
-    public AdminDashboardResponse getAdminDashboardCounts() {
-        return adminDashboardService.getAdminDashboardCounts();
+    public ApiResponse<AdminDashboardResponse> getAdminDashboardCounts() {
+        AdminDashboardResponse data = adminDashboardService.getAdminDashboardCounts();
+        return ApiResponse.<AdminDashboardResponse>builder()
+                .success(true)
+                .message("Admin dashboard counts retrieved successfully")
+                .data(data)
+                .timestamp(LocalDateTime.now())
+                .build();
     }
 }

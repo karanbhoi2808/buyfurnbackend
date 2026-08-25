@@ -1,4 +1,4 @@
-package com.buyfurn.Buyfurn.repository;
+package com.buyfurn.Buyfurn.projection;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -6,7 +6,7 @@ import java.util.List;
 public interface OrderDetailsProjection {
     long getOrderId();
     String getOrderStatus();
-    LocalDateTime getCreatedDate();
+    LocalDateTime getCreatedAt();
     String getContact();
     String getUsername();
     Double getAmount();
